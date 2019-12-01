@@ -36,6 +36,7 @@ services :
          dockerfile: Dockerfile
        ports:
          - 80:80
+         - 1936:1936
        expose:
          - 80
        networks:
