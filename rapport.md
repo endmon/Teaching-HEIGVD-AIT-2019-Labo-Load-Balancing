@@ -52,9 +52,21 @@ We have been asked to do a run for base data with the base config, so we set the
 ### 2.
 We set a 250ms delay to s1 :
 ![JMeter 250ms](./pictures/jmeter250.png)
-
+We can see with this run taht it took a really long time (25min) because 1000*0.25s, but it works well in fact. What happens it's that the first user takes the connection to s1 and it will be long because the cookie specify s1 for each request. And the second user go to s2 without problems and takes each time s2 because of the cookie.
 ### 3.
+Proof that we set correctly the delay :
+![Proof delay 2500ms](./pictures/proof2500.png)
+We set a 2500ms delay to s1 :
+![JMeter 2500ms](./pictures/jmeter2500.png)
+We see that apparently the load balancer managd to see that the s1 server was too slow and directed all requests to s2. That's our only theory because we doesn't understand it otherwise.
+That's really weird because this timeout for connecting to a server is defined as 5000ms.
 ### 4.
+No we didn't have any error on these tasks, we think that the load balancer is smart enough to balance quite well, and we didn't make enough requests to cause an error.
 ### 5.
+After doing the weight config we have this behaviour in the JMeter tests : 
+![JMeter weights 250ms](./pictures/jmeter250weight.png)
+Nothing change from the 2. apart of the time taken. That's because the weights doesn't change anything for 2 users.
 ### 6.
+Now the weights takes effects because it's like we have another user each time, because we clean cookies for each iteration. So the weights influence the behaviour of the load balancer in this way :
+![JMeter weights 250ms clean cookies](./pictures/jmeter250weight2.png)
 
