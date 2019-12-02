@@ -1,4 +1,4 @@
-#Task 1
+# Task 1
 
 ### 1.
 We can see that the proxy handles requests like this :
@@ -63,6 +63,75 @@ We can explain the behaviour because how JMeter handles the cookies, because the
 ### 7.
 We can see the result of the manipulations we have done, in fact we added one "user". So the second user when doing his request he's redirected to the other server and all of these future requests will too (because of the cookie).
 ## Task 3
+
+### 1.
+
+![](./pictures/statePageTask3-1.jpg)
+
+![](./pictures/JsonTask3-1.jpg)
+
+We can see in the screenshot above that it is the node "s2" that answers.
+
+### 2.
+
+![](./pictures/statePageTask3-drain.jpg)
+
+We pass the node "s2" on DRAIN mode, it become blue "soft stopped" on the state page.
+
+### 3.
+
+![](./pictures/JsonTask3AfterDrain.jpg)
+
+It's the same node than answer our request. In DRAIN mode, all the new traffic will be redirected to the other nodes, but the current sesssion continue to make request to the node in DRAIN mode.
+
+### 4.
+
+![](./pictures/ChromeJsonTask3-1.png)
+
+In the new browser , we start a new session and we reach the node "s1".
+
+### 5.
+
+![](./pictures/ChromeJsonTask3-2.png)
+
+We clear the cookies on the new browser and we still reach the node "s1". Because "s2" is DRAIN mode, the new session can't reach the "s2". The new browser can only reach "s1".
+
+![](./pictures/JsonTask3AfterChrome.jpg)
+
+We refresh the first browser and it is still on the node "s2". But if we clear the cookie in the first browser, it will not be able to reach "s2" too.
+
+### 6.
+
+![](./pictures/statePageTask3-ready.jpg)
+
+We pass "s2" on READY mode. On the state page, it becomes like at beginning.
+
+It balanced sequentially between the two nodes.
+
+![](./pictures/ChromeJsonTask3-3.png)
+
+We clear the cookies in the new browser and it reach the node "s2". If we clear again, it will change sequentially.
+
+![](./pictures/JsonTask3AfterReady.jpg)
+
+On the first browser, it still on the node "s2".
+
+### 7.
+
+![](./pictures/statePageTask3-maint.jpg)
+
+We pass the node "s2" on MAINT mode, it become brown "down" on the state page.
+
+On MAINT mode, all the traffic is redirected to the other nodes, including existing sessions. The node "s2" can't be reached by request.
+
+![](./pictures/ChromeJsonTask3-4.png)
+
+The new browser reach the node "s1". If we clear the cookies, we still only reach "s1".
+
+![](./pictures/JsonTask3Aftermaint.jpg)
+
+The first browser is not anymore on the node "s2". And has a new session on the node "s1".
+
 ## Task 4
 ### 1.
 We have been asked to do a run for base data with the base config, so we set the delays to 0 for both servers (we took the JMeter conf. used for Task 2, 2 thread groups):
