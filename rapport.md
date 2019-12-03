@@ -17,6 +17,8 @@ Here is our sequence diagram for task 1 (roundrobin). This sequence diagram show
 
 ![Sequence Diagram 1](./pictures/seqDiagramRound1.png)
 
+That's because of the roundrobin strategy seen on the config file. This strategy consists to give a request to one server and the next to the next server. So in this case where it's a stateful ap (session dependant) it's anightmare because each time we mak a request we can go to another server than the previous request so our cookie will be reset (that's because the current server doesn't know the sessions of the previous server).
+
 ### 4.
 Here is the test in JMeter, we can see that assertions are false because the counters doesn't increment, in fact th server don't know the users coming because of balancing strategy used here.
 
@@ -27,13 +29,22 @@ Here we see the sequence diagram for this task, we can see that because there's 
 
 ![Sequence Diagram for one server](./pictures/seqDiagramRound2.png)
 
+Well, this one is a bit obvious, the load balancer detects a node down and doesn't forward any requests to it. So the session management don't have problems, but if there's too many users we will not be able to respond as well as the previous case.
+
 We can see the JMeter report too :
 
 ![JMeter results](./pictures/jmeterSecond.jpg)
 
 ## Task 2
 ### 1.
-Sequence Diagram to show differences on stickiness
+With SERVERID Cookie : 
+
+![SERVERID Diagram](./pictures/seqDiagramRound4.png)
+
+With NODESESSID Cookie : 
+
+![NodesessID diagram](./pictures/seqDiagramRound5.png)
+
 We think that the SERVERID alternative is more effective because the balancer can just evaluate the SEVERID and redirect the request accordingly.
 ### 2.
 We can see the modified configuration at the root of the git repo : `haproxy_sticky.cfg`. The modifications are juste on the `backend nodes` section. We've just added `cookie SERVERID insert indirect nocache` and the value we want to add on the cookie for each server so :
