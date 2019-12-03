@@ -1,3 +1,9 @@
+# Report for Lab 3 of AIT
+### Authors : Mickael Bonjour & Miguel Gouveia
+
+# Introduction
+This lab will help us understand better some of the strategies of load balancing proposed by HAProxy. We will pass threw some options used to specify some behaviour in same balancing strategies.
+
 # Task 1
 
 ### 1.
@@ -31,8 +37,10 @@ Sequence Diagram to show differences on stickiness
 We think that the SERVERID alternative is more effective because the balancer can just evaluate the SEVERID and redirect the request accordingly.
 ### 2.
 We can see the modified configuration at the root of the git repo : `haproxy_sticky.cfg`. The modifications are juste on the `backend nodes` section. We've just added `cookie SERVERID insert indirect nocache` and the value we want to add on the cookie for each server so :
-`server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
- server s2 ${WEBAPP_2_IP}:3000 cookie s2 check`
+```
+server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
+server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
+```
 ### 3.
 To see if we have achieved the right behaviour we can check like that :
 First we visit the site and we see that the load balancer crete the SERVERID cookie and that if we refresh the page we keep the same server :
@@ -158,7 +166,12 @@ We see that apparently the load balancer managd to see that the s1 server was to
 ### 4.
 No we didn't have any error on these tasks, we think that the load balancer is smart enough to balance quite well, and we didn't make enough requests to cause an error.
 ### 5.
-After doing the weight config we have this behaviour in the JMeter tests : 
+After doing the weight config:
+```
+server s1 ${WEBAPP_1_IP}:3000 cookie s1 check weight 2
+server s2 ${WEBAPP_2_IP}:3000 cookie s2 check weight 1
+```
+We have this behaviour in the JMeter tests : 
 
 ![JMeter weights 250ms](./pictures/jmeter250weight.png)
 
@@ -167,4 +180,35 @@ Nothing change from the 2. apart of the time taken. That's because the weights d
 Now the weights takes effects because it's like we have another user each time, because we clean cookies for each iteration. So the weights influence the behaviour of the load balancer in this way :
 
 ![JMeter weights 250ms clean cookies](./pictures/jmeter250weight2.png)
+## Task 5
+### 1. 
+We have choosen the first and leastconn strategies, because they seems interesting to us. In fact, the first strategy is interesting because it's used to only use one server for a certain amount of connection and shut down the oter servers in the farm (ecological for this times). 
+### 2.
+#### First
+In the root folder you can see the haproxy_first.cfg which is the default config we used for the tests, but we will change maxconn values as indicated. 
 
+So for this balancing strategy we need this config :
+```
+balance first
+server s1 ${WEBAPP_1_IP}:3000 cookie s1 check maxconn 1
+server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
+``` 
+The maxconn 1 define 1 connection before it switches to the other server.
+Like we see on this JMeter test both servers have one connection. 
+
+![Jmeter first strat](./pictures/jmeterStratFirst.png)
+
+In this screenshot we see one connection for each (because of 2 threads).
+If we want to see better this strategy we put maxconn to 3 and 4 threads. But we lower the iterations to 100 for each thread. And we can see this behaviour :
+
+![First strat to maxconn 3](./pictures/jmeterStratFirst3.png)
+
+With these parameters we can better see what's hapenning, it manages to have only 3 connections at a time. we can see that with the 300 requests to s1 and only 100 to s2, because s1 was already respondy to 3 different connections.
+
+I think that's the best way to see really the impact. Maybe if you have a node that has better hardware than an other you can try this option to tweak the behaviour of your load balancing and go to mid-full capacity on the server you want not to overheat.
+
+#### Leastconn
+### 3.
+
+## Conclusion
+This lab was really interesting because HAProxy is really a complete tool for load balancing and it's interesting to see the optimizations we can do and that it's well used by profesionnals. And we learned many options of JMeter.
