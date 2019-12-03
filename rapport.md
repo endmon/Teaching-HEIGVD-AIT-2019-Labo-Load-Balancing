@@ -49,6 +49,7 @@ We think that the SERVERID alternative is more effective because the balancer ca
 ### 2.
 We can see the modified configuration at the root of the git repo : `haproxy_sticky.cfg`. The modifications are juste on the `backend nodes` section. We've just added `cookie SERVERID insert indirect nocache` and the value we want to add on the cookie for each server so :
 ```
+cookie SERVERID insert indirect nocache
 server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
 server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
 ```
@@ -65,8 +66,6 @@ But if we open an incognito (to remove all cookies) we can see that the roundrob
 ![sticky session 3](./pictures/sticky3.png)
 
 And if we refresh this page we keep the same server again because the SERVERID cookie is well set.
-
-![sticky session 4](./pictures/sticky4.png)
 ### 4.
 We can see here the diagram of the situation where 1 browser refresh the page and what happens if another browser opens a connection :
 
@@ -81,6 +80,8 @@ Here is the summary report of this task :
 We can explain the behaviour because how JMeter handles the cookies, because there's only one thread group and so one user. So that's normal that we just have one server who responds (because of the SERVERID Cookie).
 ### 7.
 We can see the result of the manipulations we have done, in fact we added one "user". So the second user when doing his request he's redirected to the other server and all of these future requests will too (because of the cookie).
+
+![Test JMeter](./pictures/jmeterTest.png)
 ## Task 3
 
 ### 1.
@@ -162,7 +163,7 @@ We set a 250ms delay to s1 :
 
 ![JMeter 250ms](./pictures/jmeter250.png)
 
-We can see with this run taht it took a really long time (25min) because 1000*0.25s, but it works well in fact. What happens it's that the first user takes the connection to s1 and it will be long because the cookie specify s1 for each request. And the second user go to s2 without problems and takes each time s2 because of the cookie.
+We can see with this run that it took a really long time (25min), but it works well in fact. What happens it's that the first user takes the connection to s1 and it will be long because the cookie specify s1 for each request. And the second user go to s2 without problems and takes each time s2 because of the cookie.
 ### 3.
 Proof that we set correctly the delay :
 
@@ -215,6 +216,8 @@ If we want to see better this strategy we put maxconn to 3 and 4 threads. But we
 ![First strat to maxconn 3](./pictures/jmeterStratFirst3.png)
 
 With these parameters we can better see what's hapenning, it manages to have only 3 connections at a time. we can see that with the 300 requests to s1 and only 100 to s2, because s1 was already respondy to 3 different connections.
+
+I've made tests with 10 threads but it's less obvious what happens because s1 take moe than 3 connections (because when the 100 iterations finish the connection is no more effective).
 
 I think that's the best way to see really the impact. Maybe if you have a node that has better hardware than an other you can try this option to tweak the behaviour of your load balancing and go to mid-full capacity on the server you want not to overheat.
 
