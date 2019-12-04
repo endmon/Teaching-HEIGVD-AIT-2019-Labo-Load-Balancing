@@ -1,10 +1,10 @@
 # Report for Lab 3 of AIT
 ### Authors : Mickael Bonjour & Miguel Gouveia
 
-# Introduction
+## Introduction
 This lab will help us understand better some of the strategies of load balancing proposed by HAProxy. We will pass threw some options used to specify some behaviour in same balancing strategies.
 
-# Task 1
+## Task 1
 
 ### 1.
 We can see that the proxy handles requests like this :
@@ -47,7 +47,7 @@ With NODESESSID Cookie :
 
 We think that the SERVERID alternative is more effective because the balancer can just evaluate the SEVERID and redirect the request accordingly.
 ### 2.
-We can see the modified configuration at the root of the git repo : `haproxy_sticky.cfg`. The modifications are juste on the `backend nodes` section. We've just added `cookie SERVERID insert indirect nocache` and the value we want to add on the cookie for each server so :
+We can see the modified configuration at annexes : `haproxy_sticky.cfg`. The modifications are just on the `backend nodes` section. We've just added `cookie SERVERID insert indirect nocache` and the value we want to add on the cookie for each server so :
 ```
 cookie SERVERID insert indirect nocache
 server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
@@ -178,7 +178,7 @@ We see that apparently the load balancer managd to see that the s1 server was to
 ### 4.
 No we didn't have any error on these tasks, we think that the load balancer is smart enough to balance quite well, and we didn't make enough requests to cause an error.
 ### 5.
-After doing the weight config:
+After doing the weight config (haproxy_weight.cfg in annexes):
 ```
 server s1 ${WEBAPP_1_IP}:3000 cookie s1 check weight 2
 server s2 ${WEBAPP_2_IP}:3000 cookie s2 check weight 1
@@ -192,12 +192,14 @@ Nothing change from the 2. apart of the time taken. That's because the weights d
 Now the weights takes effects because it's like we have another user each time, because we clean cookies for each iteration. So the weights influence the behaviour of the load balancer in this way :
 
 ![JMeter weights 250ms clean cookies](./pictures/jmeter250weight2.png)
+
+Where we have more weight the load balancer will try to send more requests, accordingly to the incoming requests.
 ## Task 5
 ### 1. 
 We have choosen the first and leastconn strategies, because they seems interesting to us. In fact, the first strategy is interesting because it's used to only use one server for a certain amount of connection and shut down the oter servers in the farm (ecological for this times). The leastconn strategy is interesting because it balance between the number of open connection in servers, if the server "s1" has 2 open connections and "s1" has none, leastconn strategy will send the new connection to "s1". This avoids having one server with 10 open connections and the other without any.
 ### 2.
 #### First
-In the root folder you can see the haproxy_first.cfg which is the default config we used for the tests, but we will change maxconn values as indicated. 
+In the annexes you can see the haproxy_first.cfg which is the default config we used for the tests, but we will change maxconn values as indicated. 
 
 So for this balancing strategy we need this config :
 ```
@@ -223,7 +225,7 @@ I think that's the best way to see really the impact. Maybe if you have a node t
 
 #### Leastconn
 
-For this balancing strategy we need to modify the /ha/config/haproxy.cfg with this config :
+For this balancing strategy we need to modify the /ha/config/haproxy.cfg with this config (available in annexes as haproxy_leastconn.cfg) :
 
 ```
 balance leastconn
@@ -233,9 +235,9 @@ We will test with JMeter the strategy. For testing the leastconn strategy, we ne
 
 We will launch two JMeter at same time. One with 3 users who keep cookies and a second test with one user who clear cookies each iteration.
 
-![](D:\incon\Documents\AIT\Teaching-HEIGVD-AIT-2019-Labo-Load-Balancing\pictures\Task5-leastconnJmeter1.JPG)
+![Task5-leastconnJmeter1](./pictures/Task5-leastconnJmeter1.JPG)
 
-![Task5-leastconnJmeter2](D:\incon\Documents\AIT\Teaching-HEIGVD-AIT-2019-Labo-Load-Balancing\pictures\Task5-leastconnJmeter2.JPG)
+![Task5-leastconnJmeter2](./pictures/Task5-leastconnJmeter2.JPG)
 
 With these parameters we can see than the leastconn strategy balanced servers with new connections that came from the second JMeter test.
 
@@ -245,3 +247,486 @@ For this lab, First is better because it allows to shut down no used server in n
 
 ## Conclusion
 This lab was really interesting because HAProxy is really a complete tool for load balancing and it's interesting to see the optimizations we can do and that it's well used by profesionnals. And we learned many options of JMeter.
+
+
+# Annexes
+
+## haproxy_sticky.cfg
+```
+# Global configuration for HAProxy
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3
+global
+    # Bind UNIX socket to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket /var/run/haproxy.sock mode 600 level admin
+
+    # Bind TCP port to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket ipv4@0.0.0.0:9999 level admin
+
+    # Define the timeout on the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3.1-stats%20timeout
+    stats timeout 30s
+
+    # Configure the way the logging is done
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#log
+    log 127.0.0.1 local1 notice
+
+# Configure defaults for all the proxies configuration (applied for all the next sections in the configuration)
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+defaults
+    # Enable logging
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-log
+    log     global
+
+    # The default mode for all the services
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    mode    http
+
+    # Enable the logging of HTTP requests
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httplog
+    option  httplog
+
+    # Enable the logging of null connections
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20dontlognull
+    option  dontlognull
+
+    # Configure the timeout to connect to a server
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20connect
+    timeout connect 5000
+
+    # Configure the timeout before cutting the connection of a client
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20client
+    timeout client  50000
+
+    # Same kind of configuration for the servers side
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20server
+    timeout server  50000
+
+# Open the metrics HAProxy page on the port 1936 on any network interface on the host
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+listen stats *:1936
+    # Enable HAProxy to serve stats about himself and the nodes
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20enable
+    stats enable
+
+    # Define the URI to access the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20uri
+    stats uri /
+
+    # Avoid leaking more info than necessary with hiding the version of HAProxy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20hide-version
+    stats hide-version
+
+# Define the frontend configuration. In fact, that's the part that configure how HAProxy will handle
+# the requests from the outside world:
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+frontend localnodes
+    # Bind the port 80 to listen incoming outside connections (from the outside world)
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    bind *:80
+
+    # Define which protocol is enabled on the binded ports.
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Use the backend configuration references by the backend name section in this configuration
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-default_backend
+    default_backend nodes
+
+# Define the backend configuration. In fact, that's the part that configure what is not directly
+# accessible from the outside of the network.
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+backend nodes
+    # Define the protocol accepted
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Define the way the backend nodes are checked to know if they are alive or down
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httpchk
+    option httpchk HEAD /
+
+    # Define the balancing policy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#balance
+    balance roundrobin
+
+    # Automatically add the X-Forwarded-For header
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20forwardfor
+    # https://en.wikipedia.org/wiki/X-Forwarded-For
+    option forwardfor
+
+    # With this config, we add the header X-Forwarded-Port
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-http-request
+    http-request set-header X-Forwarded-Port %[dst_port]
+
+    # Define the list of nodes to be in the balancing mechanism
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-server
+    cookie SERVERID insert indirect nocache
+    server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
+    server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
+
+# Other links you will need later for this lab
+#
+# About cookies: http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-cookie
+#
+
+```
+## haproxy_weight.cfg
+```
+# Global configuration for HAProxy
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3
+global
+    # Bind UNIX socket to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket /var/run/haproxy.sock mode 600 level admin
+
+    # Bind TCP port to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket ipv4@0.0.0.0:9999 level admin
+
+    # Define the timeout on the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3.1-stats%20timeout
+    stats timeout 30s
+
+    # Configure the way the logging is done
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#log
+    log 127.0.0.1 local1 notice
+
+# Configure defaults for all the proxies configuration (applied for all the next sections in the configuration)
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+defaults
+    # Enable logging
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-log
+    log     global
+
+    # The default mode for all the services
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    mode    http
+
+    # Enable the logging of HTTP requests
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httplog
+    option  httplog
+
+    # Enable the logging of null connections
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20dontlognull
+    option  dontlognull
+
+    # Configure the timeout to connect to a server
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20connect
+    timeout connect 5000
+
+    # Configure the timeout before cutting the connection of a client
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20client
+    timeout client  50000
+
+    # Same kind of configuration for the servers side
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20server
+    timeout server  50000
+
+# Open the metrics HAProxy page on the port 1936 on any network interface on the host
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+listen stats *:1936
+    # Enable HAProxy to serve stats about himself and the nodes
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20enable
+    stats enable
+
+    # Define the URI to access the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20uri
+    stats uri /
+
+    # Avoid leaking more info than necessary with hiding the version of HAProxy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20hide-version
+    stats hide-version
+
+# Define the frontend configuration. In fact, that's the part that configure how HAProxy will handle
+# the requests from the outside world:
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+frontend localnodes
+    # Bind the port 80 to listen incoming outside connections (from the outside world)
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    bind *:80
+
+    # Define which protocol is enabled on the binded ports.
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Use the backend configuration references by the backend name section in this configuration
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-default_backend
+    default_backend nodes
+
+# Define the backend configuration. In fact, that's the part that configure what is not directly
+# accessible from the outside of the network.
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+backend nodes
+    # Define the protocol accepted
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Define the way the backend nodes are checked to know if they are alive or down
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httpchk
+    option httpchk HEAD /
+
+    # Define the balancing policy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#balance
+    balance roundrobin
+
+    # Automatically add the X-Forwarded-For header
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20forwardfor
+    # https://en.wikipedia.org/wiki/X-Forwarded-For
+    option forwardfor
+
+    # With this config, we add the header X-Forwarded-Port
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-http-request
+    http-request set-header X-Forwarded-Port %[dst_port]
+
+    # Define the list of nodes to be in the balancing mechanism
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-server
+    cookie SERVERID insert indirect nocache
+    server s1 ${WEBAPP_1_IP}:3000 cookie s1 check weight 2
+    server s2 ${WEBAPP_2_IP}:3000 cookie s2 check weight 1
+
+# Other links you will need later for this lab
+#
+# About cookies: http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-cookie
+#
+
+```
+## haproxy_first.cfg
+```
+# Global configuration for HAProxy
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3
+global
+    # Bind UNIX socket to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket /var/run/haproxy.sock mode 600 level admin
+
+    # Bind TCP port to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket ipv4@0.0.0.0:9999 level admin
+
+    # Define the timeout on the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3.1-stats%20timeout
+    stats timeout 30s
+
+    # Configure the way the logging is done
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#log
+    log 127.0.0.1 local1 notice
+
+# Configure defaults for all the proxies configuration (applied for all the next sections in the configuration)
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+defaults
+    # Enable logging
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-log
+    log     global
+
+    # The default mode for all the services
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    mode    http
+
+    # Enable the logging of HTTP requests
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httplog
+    option  httplog
+
+    # Enable the logging of null connections
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20dontlognull
+    option  dontlognull
+
+    # Configure the timeout to connect to a server
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20connect
+    timeout connect 5000
+
+    # Configure the timeout before cutting the connection of a client
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20client
+    timeout client  50000
+
+    # Same kind of configuration for the servers side
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20server
+    timeout server  50000
+
+# Open the metrics HAProxy page on the port 1936 on any network interface on the host
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+listen stats *:1936
+    # Enable HAProxy to serve stats about himself and the nodes
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20enable
+    stats enable
+
+    # Define the URI to access the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20uri
+    stats uri /
+
+    # Avoid leaking more info than necessary with hiding the version of HAProxy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20hide-version
+    stats hide-version
+
+# Define the frontend configuration. In fact, that's the part that configure how HAProxy will handle
+# the requests from the outside world:
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+frontend localnodes
+    # Bind the port 80 to listen incoming outside connections (from the outside world)
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    bind *:80
+
+    # Define which protocol is enabled on the binded ports.
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Use the backend configuration references by the backend name section in this configuration
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-default_backend
+    default_backend nodes
+
+# Define the backend configuration. In fact, that's the part that configure what is not directly
+# accessible from the outside of the network.
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+backend nodes
+    # Define the protocol accepted
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Define the way the backend nodes are checked to know if they are alive or down
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httpchk
+    option httpchk HEAD /
+
+    # Define the balancing policy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#balance
+    balance first
+
+    # Automatically add the X-Forwarded-For header
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20forwardfor
+    # https://en.wikipedia.org/wiki/X-Forwarded-For
+    option forwardfor
+
+    # With this config, we add the header X-Forwarded-Port
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-http-request
+    http-request set-header X-Forwarded-Port %[dst_port]
+
+    # Define the list of nodes to be in the balancing mechanism
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-server
+    cookie SERVERID insert indirect nocache
+    server s1 ${WEBAPP_1_IP}:3000 cookie s1 check maxconn 1
+    server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
+
+# Other links you will need later for this lab
+#
+# About cookies: http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-cookie
+#
+```
+## haproxy_leastconn.cfg
+```
+# Global configuration for HAProxy
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3
+global
+    # Bind UNIX socket to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket /var/run/haproxy.sock mode 600 level admin
+
+    # Bind TCP port to get various stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#stats
+    stats socket ipv4@0.0.0.0:9999 level admin
+
+    # Define the timeout on the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#3.1-stats%20timeout
+    stats timeout 30s
+
+    # Configure the way the logging is done
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#log
+    log 127.0.0.1 local1 notice
+
+# Configure defaults for all the proxies configuration (applied for all the next sections in the configuration)
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+defaults
+    # Enable logging
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-log
+    log     global
+
+    # The default mode for all the services
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    mode    http
+
+    # Enable the logging of HTTP requests
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httplog
+    option  httplog
+
+    # Enable the logging of null connections
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20dontlognull
+    option  dontlognull
+
+    # Configure the timeout to connect to a server
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20connect
+    timeout connect 5000
+
+    # Configure the timeout before cutting the connection of a client
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20client
+    timeout client  50000
+
+    # Same kind of configuration for the servers side
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-timeout%20server
+    timeout server  50000
+
+# Open the metrics HAProxy page on the port 1936 on any network interface on the host
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+listen stats *:1936
+    # Enable HAProxy to serve stats about himself and the nodes
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20enable
+    stats enable
+
+    # Define the URI to access the stats
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20uri
+    stats uri /
+
+    # Avoid leaking more info than necessary with hiding the version of HAProxy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-stats%20hide-version
+    stats hide-version
+
+# Define the frontend configuration. In fact, that's the part that configure how HAProxy will handle
+# the requests from the outside world:
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+frontend localnodes
+    # Bind the port 80 to listen incoming outside connections (from the outside world)
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-bind
+    bind *:80
+
+    # Define which protocol is enabled on the binded ports.
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Use the backend configuration references by the backend name section in this configuration
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-default_backend
+    default_backend nodes
+
+# Define the backend configuration. In fact, that's the part that configure what is not directly
+# accessible from the outside of the network.
+# http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4
+backend nodes
+    # Define the protocol accepted
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-mode
+    mode http
+
+    # Define the way the backend nodes are checked to know if they are alive or down
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20httpchk
+    option httpchk HEAD /
+
+    # Define the balancing policy
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#balance
+    balance leastconn
+
+    # Automatically add the X-Forwarded-For header
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-option%20forwardfor
+    # https://en.wikipedia.org/wiki/X-Forwarded-For
+    option forwardfor
+
+    # With this config, we add the header X-Forwarded-Port
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-http-request
+    http-request set-header X-Forwarded-Port %[dst_port]
+
+    # Define the list of nodes to be in the balancing mechanism
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-server
+    cookie SERVERID insert indirect nocache
+    server s1 ${WEBAPP_1_IP}:3000 cookie s1 check
+    server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
+
+# Other links you will need later for this lab
+#
+# About cookies: http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-cookie
+#
+
+```
