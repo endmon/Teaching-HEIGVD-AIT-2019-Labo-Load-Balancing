@@ -194,7 +194,7 @@ Now the weights takes effects because it's like we have another user each time, 
 ![JMeter weights 250ms clean cookies](./pictures/jmeter250weight2.png)
 ## Task 5
 ### 1. 
-We have choosen the first and leastconn strategies, because they seems interesting to us. In fact, the first strategy is interesting because it's used to only use one server for a certain amount of connection and shut down the oter servers in the farm (ecological for this times). 
+We have choosen the first and leastconn strategies, because they seems interesting to us. In fact, the first strategy is interesting because it's used to only use one server for a certain amount of connection and shut down the oter servers in the farm (ecological for this times). The leastconn strategy is interesting because it balance between the number of open connection in servers, if the server "s1" has 2 open connections and "s1" has none, leastconn strategy will send the new connection to "s1". This avoids having one server with 10 open connections and the other without any.
 ### 2.
 #### First
 In the root folder you can see the haproxy_first.cfg which is the default config we used for the tests, but we will change maxconn values as indicated. 
@@ -204,7 +204,7 @@ So for this balancing strategy we need this config :
 balance first
 server s1 ${WEBAPP_1_IP}:3000 cookie s1 check maxconn 1
 server s2 ${WEBAPP_2_IP}:3000 cookie s2 check
-``` 
+```
 The maxconn 1 define 1 connection before it switches to the other server.
 Like we see on this JMeter test both servers have one connection. 
 
@@ -222,7 +222,26 @@ I've made tests with 10 threads but it's less obvious what happens because s1 ta
 I think that's the best way to see really the impact. Maybe if you have a node that has better hardware than an other you can try this option to tweak the behaviour of your load balancing and go to mid-full capacity on the server you want not to overheat.
 
 #### Leastconn
+
+For this balancing strategy we need to modify the /ha/config/haproxy.cfg with this config :
+
+```
+balance leastconn
+```
+
+We will test with JMeter the strategy. For testing the leastconn strategy, we need to create an imbalance between the two servers.
+
+We will launch two JMeter at same time. One with 3 users who keep cookies and a second test with one user who clear cookies each iteration.
+
+![](D:\incon\Documents\AIT\Teaching-HEIGVD-AIT-2019-Labo-Load-Balancing\pictures\Task5-leastconnJmeter1.JPG)
+
+![Task5-leastconnJmeter2](D:\incon\Documents\AIT\Teaching-HEIGVD-AIT-2019-Labo-Load-Balancing\pictures\Task5-leastconnJmeter2.JPG)
+
+With these parameters we can see than the leastconn strategy balanced servers with new connections that came from the second JMeter test.
+
 ### 3.
+
+For this lab, First is better because it allows to shut down no used server in no-intensive hours and leastconn is not useful here, because http connection don't last enough to create a unbalance that the leastconn strategy needs to correct.
 
 ## Conclusion
 This lab was really interesting because HAProxy is really a complete tool for load balancing and it's interesting to see the optimizations we can do and that it's well used by profesionnals. And we learned many options of JMeter.
